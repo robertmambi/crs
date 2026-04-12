@@ -1,0 +1,9 @@
+./dockerLaravel/backend/vendor
+./dockerLaravel/backend/artisan
+./dockerLaravel/backend/bootstrap/cache
+./dockerLaravel/backend/database/*.sqlite*
+./dockerLaravel/backend/database/storage
+./dockerLaravel/laravel
+
+
+
