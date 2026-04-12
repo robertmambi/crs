@@ -31,32 +31,20 @@
 	composer create-project laravel/laravel
 	
 
-
-
-
-
-
-
 ## Lavavel Log check
 	docker exec -it laravel_app bash
 	tail -f storage/logs/laravel.log
----
 
 
-### Clean before reinstall
+
+### CLEAN reinstall Stack
 - rm -rf ./backend
 - docker compose down -v
 
-### Installing
-- cd /home/robert/crs/dockerLaravel
-- composer create-project laravel/laravel:^12.0 backend
-- docker compose up -d --build
 
 ### Config
 - docker exec -it laravel_app bash
 - cd /var/www
-- chmod -R 775 storage bootstrap/cache
-- chown -R www-data:www-data storage bootstrap/cache
 - composer require laravel/sanctum
 - php artisan vendor:publish --tag=sanctum-config
 - php artisan migrate
@@ -64,10 +52,10 @@
 
 ## nano .env
 ```sh
-APP_URL=http://192.168.0.105:8000
+APP_URL=http://192.168.0.102:8000
 SESSION_DRIVER=file
-SESSION_DOMAIN=192.168.0.105
-SANCTUM_STATEFUL_DOMAINS=192.168.0.105:5173,192.168.0.105
+SESSION_DOMAIN=192.168.0.102
+SANCTUM_STATEFUL_DOMAINS=192.168.0.102:5173,192.168.0.105
 ```
 
 ## cors
@@ -94,8 +82,8 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 })
 ```
 
-- php artisan key:generate
-- php artisan optimize:clear
+	php artisan key:generate
+	php artisan optimize:clear
 
 ## nano database/migration/users.php
 ```php
@@ -170,12 +158,13 @@ protected $fillable = [
 ```
 
 ## Drops ALL tables & Recreates them from migrations-code
-- php artisan key:generate
-- php artisan migrate:fresh
+	php artisan key:generate
+	php artisan migrate:fresh
 
 
 
-## php artisan tinker
+## List columns insert user
+	php artisan tinker
 ```php
 Schema::getColumnListing('users');
 //-------------------------------------
@@ -205,7 +194,7 @@ App\Models\User::create([
 ]);
 ```
 
-# API
+# API - Setup
 - Create Controller <mark>app/Http/Controllers/AuthController.php
 - Define Route <mark>routes/app.php</mark>
 - Register it in Laravel <mark>bootstrap/app.php
@@ -214,8 +203,8 @@ App\Models\User::create([
 
 
 	## *Create Controller*
-	- $php artisan make:controller AuthController
-	- $nano app/Http/Controllers/AuthController.php
+		$php artisan make:controller AuthController
+		$sudo nano app/Http/Controllers/AuthController.php
 
 	```php
 	use Illuminate\Http\Request;
@@ -260,9 +249,9 @@ App\Models\User::create([
 	```
 
 
-	## *Define route*
+	## *Define Route*
 	- $touch routes/api.php
-	- $nano routes/api.php
+	- $sudo nano routes/api.php
 
 	```php
 		use Illuminate\Support\Facades\Route;
@@ -279,7 +268,7 @@ App\Models\User::create([
 	```
 
 	## *Register it in Laravel*
-	- $nano bootstrap/app.php
+	- $sudo nano bootstrap/app.php
 
 	```php
 	->withRouting(
@@ -314,25 +303,23 @@ App\Models\User::create([
 	```	
 
 ## *Clear cache*
-- php artisan optimize:clear
-- php artisan route:list
+	php artisan optimize:clear
+	php artisan route:list
 
 <br>
 
 # TEST
 ```sh
-curl -i -c cookies.txt http://192.168.0.105:8000/sanctum/csrf-cookie
+curl -i -c cookies.txt http://192.168.0.102:8000/sanctum/csrf-cookie
 
 curl -i -b cookies.txt -c cookies.txt \
--X POST http://192.168.0.105:8000/api/auth/login \
+-X POST http://192.168.0.102:8000/api/auth/login \
 -H "Content-Type: application/json" \
 -H "Accept: application/json" \
 -d '{"email":"admin@test.com","password":"password123"}'
 
 
-curl -i -b cookies.txt \
-http://192.168.0.105:8000/api/auth/me \
--H "Accept: application/json"
+curl -i -b cookies.txt http://192.168.0.102:8000/api/auth/me -H "Accept: application/json"
 ```
 
 <br>
