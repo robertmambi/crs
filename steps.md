@@ -544,3 +544,38 @@ export default defineConfig({
     },
 });
 ```
+
+
+# FILAMENT Panels
+
+```sh
+docker exec -it laravel_app bash
+composer require filament/filament:"^5.0" -W
+php artisan filament:install --panels
+php artisan optimize:clear
+```
+
+## EDIT : app/Models/User.php
+
+```php
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return in_array($this->role, ['admin', 'operator', 'carowner'], true);
+    }
+
+    public function getFilamentName(): string
+    {
+    return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? '')) 
+        ?: (string) $this->email 
+        ?: 'User';
+    }
+
+```

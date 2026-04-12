@@ -5,5 +5,5 @@ dockerLaravel/backend/database/*.sqlite*
 dockerLaravel/backend/storage
 dockerLaravel/backend/laravel
 dockerLaravel/backend/node_modules
-
+dockerLaravel/backend/public
 
