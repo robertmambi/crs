@@ -324,7 +324,7 @@ curl -i -b cookies.txt http://192.168.0.102:8000/api/auth/me -H "Accept: applica
 
 <br>
 
-# React
+# React Setup
 
 ```sh
 npm create vite@latest myapp
@@ -337,8 +337,210 @@ npm run dev -- --host
 
 
 
+# Laravel WEB-Blade Setup
+
+## ADD web routes : routes/web.php
+
+```php
+<?php
+
+use App\Http\Controllers\WebAuthController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/login', [WebAuthController::class, 'create'])
+	->name('login');
+
+Route::post('/login', [WebAuthController::class, 'store'])
+	->name('login.store');
+
+Route::post('/logout', [WebAuthController::class, 'destroy'])
+	->name('logout');
+
+Route::get('/dashboard', function () {
+	return view('dashboard');
+})->middleware('auth')->name('dashboard');
+```
 
 
+$php artisan make:controller WebAuthController
+
+## CREATE the controller : app/Http/Controllers/WebAuthController.php
+
+```php
+<?php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class WebAuthController extends Controller
+{
+    public function create()
+    {
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth.login');
+    }
+
+    public function store(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        $remember = $request->boolean('remember');
+
+        if (! Auth::attempt($credentials, $remember)) {
+            return back()
+                ->withErrors([
+                    'email' => 'Invalid email or password.',
+                ])
+                ->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard'));
+    }
+
+    public function destroy(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+}
+```
+
+## CREATE the Blade login view : resources/views/auth/login.blade.php
+	comment out for later fix :
+	{{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 
 
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md bg-white shadow rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Sign in</h1>
 
+        @if ($errors->any())
+            <div class="mb-4 rounded bg-red-100 text-red-700 p-3">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('login.store') }}" class="space-y-4">
+            @csrf
+
+            <div>
+                <label for="email" class="block text-sm font-medium mb-1">Email</label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value="{{ old('email') }}"
+                    required
+                    autofocus
+                    class="w-full border rounded px-3 py-2"
+                >
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1">Password</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    class="w-full border rounded px-3 py-2"
+                >
+            </div>
+
+            <div class="flex items-center">
+                <input id="remember" name="remember" type="checkbox" class="mr-2">
+                <label for="remember" class="text-sm">Remember me</label>
+            </div>
+
+            <button
+                type="submit"
+                class="w-full bg-black text-white rounded px-4 py-2"
+            >
+                Login
+            </button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+## CREATE a simple protected dashboard : resources/views/dashboard.blade.php
+	Comment out for later fix :
+	{{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
+
+        <p class="mb-4">Welcome, {{ auth()->user()->name }}.</p>
+
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button class="bg-red-600 text-white rounded px-4 py-2">
+                Logout
+            </button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+## vite.config.js
+
+```php
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+        tailwindcss(),
+    ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: '192.168.0.102',
+        },
+        watch: {
+            ignored: ['**/storage/framework/views/**'],
+        },
+    },
+});
+```

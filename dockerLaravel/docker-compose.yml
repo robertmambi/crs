@@ -56,7 +56,16 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
-      
+
+  node:
+    image: node:20
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+
 volumes:
   dbdata:
   portainer_data:
