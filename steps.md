@@ -1,4 +1,8 @@
 # Tools
+- Laravel 12
+- Filament 5
+- Livewire 4
+- PHP 8.2
 
 ## SSH
 	sudo apt update

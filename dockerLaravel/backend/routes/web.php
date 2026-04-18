@@ -2,6 +2,11 @@
 
 use App\Http\Controllers\WebAuthController;
 use Illuminate\Support\Facades\Route;
+//use App\Livewire\CarList;
+
+Route::get('/cars', function () {
+    return view('cars');
+});
 
 Route::get('/login', [WebAuthController::class, 'create'])
     ->name('login');
