@@ -22,7 +22,7 @@ class User extends Authenticatable implements FilamentUser, HasName
      * @var list<string>
      */
     protected $fillable = [
-    'first_name',
+    'name',
     'last_name',
     'email',
     'password',
@@ -68,11 +68,9 @@ class User extends Authenticatable implements FilamentUser, HasName
         return in_array($this->role, ['admin', 'operator'], true);
     }
 
-       public function getFilamentName(): string
+    public function getFilamentName(): string
     {
-        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? '')) 
-            ?: (string) $this->email 
-            ?: 'User';
+        return (string) $this->email ?: 'User';
     }
 
     public function cars()

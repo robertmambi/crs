@@ -18,6 +18,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\DatePicker;
 
 class UserResource extends Resource
 {
@@ -25,61 +29,117 @@ class UserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $recordTitleAttribute = 'first_name';
+    protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Section::make('User')
-                    ->schema([
-                        TextInput::make('first_name')
-                            ->required(),
+        return $schema->components([
 
-                        TextInput::make('last_name')
-                            ->required(),
+            // 👤 BASIC INFO
+            Section::make('Basic Info')
+                ->schema([
+                    TextInput::make('name')->required(),
+                    TextInput::make('last_name')->required(),
 
-                        TextInput::make('email')
-                            ->email()
-                            ->required(),
+                    TextInput::make('email')
+                        ->email()
+                        ->unique(ignoreRecord: true),
 
-                        Select::make('role')
-                            ->options([
+                    TextInput::make('phone'),
 
-                                'operator' => 'Operator',
-                                'customer' => 'Customer',
-                                'carowner' => 'Car Owner',
-                            ])
-                            ->required(),
-                    ])
-            ]);
+                    TextInput::make('password')
+                        ->password()
+                        ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
+                        ->dehydrated(fn ($state) => filled($state))
+                        ->required(fn (string $context) => $context === 'create'),
+                ]),
+
+            // 🎭 ROLE & STATUS
+            Section::make('Role & Status')
+                ->schema([
+                    Select::make('role')
+                        ->options([
+                            'admin' => 'Admin',
+                            'operator' => 'Operator',
+                            'customer' => 'Customer',
+                            'carowner' => 'Car Owner',
+                        ])
+                        ->required(),
+
+                    Select::make('status')
+                        ->options([
+                            'active' => 'Active',
+                            'pending' => 'Pending',
+                            'suspended' => 'Suspended',
+                            'blocked' => 'Blocked',
+                        ])
+                        ->required(),
+                ]),
+
+            // 🪪 KYC & DRIVER
+            Section::make('Verification')
+                ->schema([
+                    Select::make('kyc_status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'approved' => 'Approved',
+                            'rejected' => 'Rejected',
+                        ]),
+
+                    Select::make('driver_status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'approved' => 'Approved',
+                            'rejected' => 'Rejected',
+                        ]),
+
+                    Select::make('id_type')
+                        ->options([
+                            'driver_license' => 'Driver License',
+                            'passport' => 'Passport',
+                        ]),
+
+                    TextInput::make('id_number'),
+
+                    TextInput::make('id_image'),
+                ]),
+
+            // 📊 SYSTEM
+            Section::make('System')
+                ->schema([
+                    Toggle::make('profile_completed')
+                        ->label('Profile Completed'),
+
+                    DatePicker::make('email_verified_at'),
+                    DatePicker::make('phone_verified_at'),
+                    DatePicker::make('last_login_at'),
+                ]),
+        ]);
     }
 
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('first_name')
-                    ->label('First Name')
-                    ->searchable()
-                    ->sortable(),
+            TextColumn::make('name')
+                ->label('Name')
+                ->getStateUsing(fn ($record) => "{$record->name} {$record->last_name}")
+                ->searchable(),
 
-                \Filament\Tables\Columns\TextColumn::make('last_name')
-                    ->label('Last Name')
-                    ->searchable()
-                    ->sortable(),
+            TextColumn::make('email')->searchable(),
 
-                \Filament\Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
+            TextColumn::make('phone'),
 
-                \Filament\Tables\Columns\TextColumn::make('role')
-                    ->badge()
-                    ->sortable(),
+            TextColumn::make('role')->badge(),
 
-                \Filament\Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
+            TextColumn::make('status')->badge(),
+
+            TextColumn::make('kyc_status')->badge(),
+
+            TextColumn::make('driver_status')->badge(),
+
+            TextColumn::make('created_at')->dateTime(),
+        ])
             ->filters([
                 \Filament\Tables\Filters\SelectFilter::make('role')
                     ->options([
@@ -115,7 +175,7 @@ class UserResource extends Resource
 
     public static function getRecordTitle($record): string
     {
-        return trim("{$record->first_name} {$record->last_name}") ?: $record->email;
+        return trim("{$record->name} {$record->last_name}") ?: $record->email;
     }
 
     public static function mutateFormDataBeforeSave(array $data): array
