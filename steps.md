@@ -10,6 +10,9 @@
 	sudo ufw enable
 
 ## DOCKER
+    docker compose stop
+    docker compose up -d
+
 	sudo apt update
 	sudo apt install -y ca-certificates curl gnupg
 	sudo install -m 0755 -d /etc/apt/keyrings
@@ -579,3 +582,120 @@ php artisan optimize:clear
     }
 
 ```
+
+php artisan make:filament-resource User
+app/Filament/Resources/UserResource.php
+
+
+
+# CARS
+- php artisan make:migration create_cars_table
+- EDIT => database/migrations/create_cars_tble.php
+- php artisan migrate
+- php artisan make:model Car
+- EDIT => app/Models/Car.php
+- EDIT => Fix relationship/FK => app/Models/User.php
+- php artisan make:filament-resource Car
+- php artisan migrate
+- php artisan optimize:clear
+- php artisan migrate:fresh
+
+
+
+## database/migrations/create_cars_tble.php
+```php
+    public function up(): void
+    {
+        Schema::create('cars', function (Blueprint $table) {
+            $table->id();
+
+            // Owner (who owns the car)
+            $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
+
+            // Basic Info
+            $table->string('brand');
+            $table->string('model');
+            $table->year('year')->nullable();
+            $table->string('plate_number')->unique();
+            $table->string('vin_number')->nullable();
+
+            // Specifications
+            $table->string('color')->nullable();
+            $table->enum('transmission', ['auto', 'manual'])->nullable();
+            $table->enum('fuel_type', ['gas', 'diesel', 'electric', 'hybrid'])->nullable();
+            $table->integer('seats')->nullable();
+
+            // Pricing
+            $table->decimal('price_per_day', 8, 2);
+
+            // Status (business condition)
+            $table->enum('status', ['active', 'maintenance', 'inactive'])
+                  ->default('active');
+
+            // Maintenance / Tracking
+            $table->integer('mileage')->nullable();
+            $table->date('last_oil_change_date')->nullable();
+
+            // Legal Expiry Tracking
+            $table->date('insurance_expiry_date')->nullable();
+            $table->date('inspection_expiry_date')->nullable(); // keuringskaart
+            $table->date('road_tax_expiry_date')->nullable();   // belasting
+
+            // Media
+            $table->string('image_url')->nullable();
+
+            // Notes
+            $table->text('description')->nullable();
+
+            // System timestamps
+            $table->timestamps();
+            $table->softDeletes(); // optional but recommended
+        });
+    }
+```
+
+## app/Models/Car.php
+```php
+class Car extends Model
+{
+    protected $fillable = [
+        'owner_id',
+        'brand',
+        'model',
+        'year',
+        'plate_number',
+        'vin_number',
+        'color',
+        'transmission',
+        'fuel_type',
+        'seats',
+        'price_per_day',
+        'status',
+        'mileage',
+        'insurance_expiry_date',
+        'inspection_expiry_date',
+        'road_tax_expiry_date',
+        'last_oil_change_date',
+        'image_url',
+        'description',
+    ];
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+}
+```
+
+## app/Models/User.php
+```php
+public function cars()
+{
+    return $this->hasMany(Car::class, 'owner_id');
+}
+```
+
+
+
+
+

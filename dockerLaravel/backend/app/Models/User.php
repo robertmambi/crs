@@ -74,4 +74,9 @@ class User extends Authenticatable implements FilamentUser, HasName
             ?: (string) $this->email 
             ?: 'User';
     }
+
+    public function cars()
+    {
+        return $this->hasMany(Car::class, 'owner_id');
+    }
 }
